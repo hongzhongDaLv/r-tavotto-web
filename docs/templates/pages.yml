@@ -1,0 +1,79 @@
+# Optional future workflow. Current releases publish checked artifacts from
+# gh-pages; this file is not active while it remains in docs/templates/.
+name: Browser build and GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TAVOTTO_NO_TELEMETRY: '1'
+  NODE_OPTIONS: --no-experimental-webstorage
+  pnpm_config_verify_deps_before_run: 'false'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+      - name: Install controlled Node version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.19.0
+      - name: Install controlled pnpm version
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - name: Check public source boundary
+        run: pnpm check:public
+      - name: Prove public-package leak controls reject failure cases
+        run: pnpm test:public
+      - name: Install locked frontend dependencies
+        run: pnpm install:web
+      - name: Run browser adapter tests
+        run: pnpm test:browser
+      - name: Build static browser editor
+        env:
+          BROWSER_BASE_PATH: /${{ github.event.repository.name }}/
+        run: pnpm build
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+      - name: Upload only the checked static site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist-browser
+          retention-days: 7
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy checked artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

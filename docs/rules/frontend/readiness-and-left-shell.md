@@ -1,0 +1,77 @@
+# 接入状态与左侧外壳（2026-08-29，Prompt 08）
+
+> 原文出自 `web/AGENTS.md`「接入状态与左侧外壳（2026-08-29，Prompt 08）」（2026-09-17 指导文档治理时迁出，正文逐字未改）。
+> 这里是这一主题规则的**唯一全文**；`web/AGENTS.md` 只留速查行。改规则改这里，并同步那一行。
+
+「这张图能不能编辑」的**事实**只有后端 `engine/readiness.py` 一个出处
+（六个 status + 十个 reason code 的闭集，ADR 0027）。前端只翻译不判断——
+界面里**一个 `!!script` 的状态分支都没有**。
+
+- **句子与「待连接」只有一份实现**：`lib/readinessText.ts` 的 `statusLabel()`
+  （读 `status`）、`reasonText()`（读 **`reason_code`**，不读 `status`），
+  以及 `PENDING_STATUSES` / `pendingCount(summary)` / `allEditable(summary)`
+  ——横幅与接入中心顶部说的是同一个数，各展开写一遍的话，多一个状态时总有
+  一处会漏掉。`allEditable` 那一档两处表现不同但**判据同一个**：横幅整条不说话
+  （`bannerReport` 回 null），接入中心把四个计数换成一句「N 张图都可以编辑」
+  （审计 T10：正常项目不该长得像故障排查页）。这一档里**可编辑的图不再逐张
+  重复同一句解释**（那句话对每一张一模一样），第一层也只留「添加到画布」——
+  「重新试运行」是排障动作，与改绑一起收在技术详情里。四个出口共用它：
+  素材卡角标、素材说明条、接入中心每一行、属性栏那条提示。按状态查句子会让
+  只读项目里的用户一直等一个永远不来的结果（`auto_linkable` 有四个 code，
+  一个是"马上就好"、三个是"不做点什么永远不会好"）。
+- **持有者只有 `store/projectReadinessStore.ts`**：并发纪律与 `assetStore`
+  逐条相同（请求序号挡旧响应、发请求那一刻的 pj 挡串项目、同批合并、
+  `force` 另起一次、失败保留上一次成功那份）；**fingerprint 没变时连报告
+  对象的引用都不换**。刷新挂在 `liveSync.refreshAssetsAndSync()` 一处，
+  与素材清单同一批事件、同一个 `force` 语义。
+- **开关只有 `uiStore.registryOpen`**（`RegistryDialog` 的文件名与导出名保留）。
+  就绪度 store 只管 `focusId`；`focusPanel(fileId)` 是 17/18 复用的入口。
+  关闭后的焦点归位归 `ui/Dialog`，**别再记第二份**。
+- **「没测量」三档不许压扁**：`conflicts` 的 `null`、`project.registry_valid`
+  的 `null`、`PanelInfo.capability` 的 `undefined`。第三档的界面表现是
+  **什么都不显示**——补成 `layout_only` 就是替后端撒谎。
+- **界面不执行动作**：试运行走 `/api/registry/probe`（只由用户点出来，点之前
+  先说「Tavotto 将运行这个脚本」）、手工关联走 `PUT /api/registry`（键是
+  **`ReadinessPanel.stem`**，不是文件名）、重扫走 `/api/registry/scan`；
+  每次成功之后只调一次统一刷新，不手拼状态。冲突**一个候选都不预选**。
+- **`role="option"` 里不许再嵌可 Tab 的控件**：状态角标是 `<span>`，
+  「查看接入状态」那个真按钮住在 listbox 外面的说明条里。
+- **侧栏的「偏好」与「此刻开着没开」是两件事**（`uiStore` 的模块级
+  `prefOpen`）：互斥断点的自动让位、窄屏开机的裁剪只改后者，**绝不写回
+  本机偏好**。写反了的表现是"把窗口拖窄一次，常驻左栏就再也回不来了"，
+  而用户从没关过它。判据只求值一次（`autoShowProperties` 的 `assetsYield`），
+  写状态与写偏好共用它。
+- **首开的那一次确认（U03，ADR 0057 §三）**：渲染以 `workdir_confirmation_required` 回来时
+  它不是错误块，是缺一个决定——`renderStore` 把 `EngineError.confirmation` 交给
+  `envStore.requestWorkdirConfirmation`，`WorkdirConfirmDialog` 渲染三档（项目根 / 脚本目录 /
+  继续沙盒）与各档找得到的文件；**推荐项只在后端 `recommended` 有值时预选，歧义时不预选**
+  （机器不裁决，界面只翻译）；「运行」= `setWorkdirMode(mode, { confirmed: true })`（一次 PATCH，
+  不再弹第二层确认框，成功后 `retryEnvironmentFailures` 把这批面板重排）；「稍后」只关框，载荷
+  留在 `PanelRender.confirmation`，错误块的 `WorkdirChooseButton` 能再打开；同一时刻只开一份；
+  换项目 `resetProject` 清掉。设置里 `WorkdirRow` 是同一份决定的三档 `Segmented`（切到两个真实目录
+  各自确认一次，切回沙盒不确认；老服务端只报两档时第三档不摆）。**三档与选项的文案键写成字面量**
+  （`OPTION_LABEL` / `MODE_LABEL` 表），模板拼出来的键死键门禁看不见。MCP 那一面是同一份决定：
+  `tavotto_open_figure(workdir=…)`。
+- **跑前的那一次授权（U04，ADR 0061 §六）**：渲染以 `dependency_preparation_required` 回来时同样不是
+  错误块，是缺一次授权——`renderStore` 把 `EngineError.dependencyPreparation`（整份联合计划 + 可选目标）
+  交给 `depRepairStore.requestPreparation`（动态 import，避免 store 环），`DependencyPrepareDialog` 列出
+  要装的包（项目声明的完整形态，不翻译）、认不出的 import、只作约束的条数与两档目标（Tavotto 隔离环境
+  默认；项目 venv 只在它就是此刻选中的解释器时出现，文案说清会改用户环境）；「准备并继续」= `prepare(target)`
+  先绑定计划（`POST /api/engine/dependencies/plan`）再只发 `plan_id`（`/prepare`），进度经同一条 SSE
+  `engine.dependency`（`flow: 'joint'`）按 state 换文案、装完 `retryEnvironmentFailures` 重排并关框——
+  **只认自己发起的那条**（`depRepairStore.onProgress` 按 `plan_id` 与本地的 `plan` / `jointPlan` / `progress` 比对：
+  这条 SSE 不带项目判别、广播给每个订阅者，别的标签页 / 项目的计划装完不能收掉这里的框、不能把这里的渲染重排，
+  Codex #470 P2）；
+  blocked 的计划把 `joint.blocked` 的理由摆出来、不装；「不准备，直接运行」= `POST /api/engine/dependencies/skip`
+  （这道门一直问到有答案——授权或明确跳过），载荷留在 `PanelRender.dependencyPreparation`，错误块的
+  `DependencyPrepareButton` 能再打开；同一时刻只开一份；换了项目的旧载荷不弹。**目标与状态的文案键写成
+  字面量**（`TARGET_LABEL` / `STATE_TEXT` / `BLOCKED_TEXT` 表）。MCP 那一面是同一份决定：
+  `tavotto_open_figure(prepare_dependencies=…)`。
+- 看护：`store/projectReadinessStore.test.ts`、`components/RegistryDialog.test.tsx`、
+  `components/WorkdirConfirmDialog.test.tsx`、`components/WorkdirRow.test.tsx`、
+  `components/DependencyPrepareDialog.test.tsx`、
+  `components/ProjectReadinessBanner.test.tsx`、
+  `components/left/AssetBrowser.readiness.test.tsx`、
+  `canvas/panelReadinessEntry.test.tsx`、`components/inspector/panelCapabilityNote.test.tsx`、
+  `canvas/drawerViewportResize.test.tsx`、`store/uiStore.test.ts` 的两个左栏
+  describe；e2e `a11y.spec.ts` 的接入状态两条 + `golden-paths.spec.ts`。

@@ -1,0 +1,19 @@
+{
+  "name": "r-tavotto-browser-release",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
+  "scripts": {
+    "install:web": "pnpm --dir web install --frozen-lockfile",
+    "build": "pnpm --dir web run build:browser && node scripts/prepare-pages.mjs && node scripts/check-public-build.mjs",
+    "preview": "pnpm --dir web exec vite preview --config vite.browser.config.ts --host 127.0.0.1",
+    "test:browser": "pnpm --dir web exec vitest run src/r",
+    "check:public": "node scripts/check-public-source.mjs",
+    "test:public": "node scripts/verify-public-boundary.mjs",
+    "check:bundle": "node scripts/check-public-build.mjs"
+  }
+}
