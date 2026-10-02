@@ -11,8 +11,13 @@
 | 交付项 | 当前状态 |
 | --- | --- |
 | GitHub 源码地址 | [hongzhongDaLv/r-tavotto-web](https://github.com/hongzhongDaLv/r-tavotto-web)；main 保存源码 |
-| 公网网站地址 | 待主任务在 Pages 部署成功后填写 |
-| 发布源提交与静态产物提交 | 待主任务在实际发布后填写 main 源 SHA、gh-pages 产物 SHA，并核对网站 `build-info.json` |
+| 公网网站地址 | [打开 R-Tavotto Web](https://hongzhongdalv.github.io/r-tavotto-web/)；实际 HTTP 200，公网浏览器流程通过 |
+| 发布源提交 | [`a298a7e7d3cc3634055404465043c7207865f22d`](https://github.com/hongzhongDaLv/r-tavotto-web/commit/a298a7e7d3cc3634055404465043c7207865f22d) |
+| 静态产物提交 | gh-pages [`2cd734eae39d8b2bdfa10936311482fdb81792b7`](https://github.com/hongzhongDaLv/r-tavotto-web/commit/2cd734eae39d8b2bdfa10936311482fdb81792b7) |
+| 已推送回滚标签 | [源码 web-v0.1.0](https://github.com/hongzhongDaLv/r-tavotto-web/tree/web-v0.1.0)、[网站 pages-v0.1.0](https://github.com/hongzhongDaLv/r-tavotto-web/tree/pages-v0.1.0)，分别指向上面两个已验证提交 |
+| 公网来源核对 | [build-info.json](https://hongzhongdalv.github.io/r-tavotto-web/build-info.json) 的 `revision` 为上述 `a298a7…` 源提交 |
+| Pages 系统部署 | [Pages build and deployment / 37042783021](https://github.com/hongzhongDaLv/r-tavotto-web/actions/runs/37042783021)：completed / success；部署 ID `6814586634` |
+| Pages 构建时间 | 2026-10-03 01:45:04 北京时间（2026-10-02T17:45:04Z） |
 | 发布方式 | Pages 使用 gh-pages 分支的 `/ (root)`；本次不运行自定义 Actions 工作流 |
 | Node / pnpm | 固定为 24.19.0 / 11.19.0 |
 | 浏览器 R | WebR 0.6.0，PostMessage Worker 通道 |
@@ -57,8 +62,33 @@
 | 原生 R 图元选择 | 真实 R 4.5.2 / ggplot2 4.0.2 的 10 类 fixture：普通 point/col/line/vline/errorbar、分组对象及不可安全拆分误差棒，通过 | 人工数据的图元提取/选择测试；不是 WebR 完整入口测试 |
 | 真实浏览器 CAD | 真鼠标测试：灰区 LTR、灰区 RTL、白纸外选择、误差棒路径、斜线 bbox 空白角拒绝、页面外文字单击，通过 | 使用产品真实 CanvasStage 和权威测试 manifest；不启动 WebR |
 | 选择副作用 | 框选前后文档逐字相同、历史长度 0、未选 carrier；SVG overflow 可见，通过 | 对应人工 CAD fixture |
-| 全浏览器入口与导出 | 主任务正在验证合并后的实际 WebR 入口、依赖导入、尺寸数值、交互、项目重开和图形导出 | 通过前不得将本行改成完成 |
-| 分支发布与公网 | 主任务负责 main 源码/gh-pages 静态产物推送、Pages 分支部署和公网重测 | 本次没有自定义 Actions CI 运行；部署成功前不得宣称网站已上线 |
+| WebR 运行与独立 R 重放 | 实际 WebR 测试及独立 Rscript 重放通过；保留图元结构、修改和导出链路 | 使用人工 fixture，不能推广为所有 R 包或科研脚本均兼容 |
+| 全浏览器入口与导出 | 公网入口打开示例、调整页面/图框、保存项目、重开、查看 R 代码和 SVG/PDF/PNG 导出通过 | 使用下表的具体尺寸和人工示例；不是任意参数的完整覆盖证明 |
+| 真实文件选择与依赖导入 | 公网真实 filechooser 一次选择 `upload.R` 与 `data.csv`，通过相对路径 `read.csv()` 运行；项目保存原始文件字节和 SHA 一致 | 测试的是用户明确选择的两份人工文件，未查询本机目录 |
+| 存储失败兜底 | 模拟 IndexedDB `QuotaExceeded` 后仍下载完整项目，通过 | 自动恢复可能不可用，正式存档仍使用下载文件 |
+| 分支发布与公网 | main 源码、gh-pages 静态产物和 Pages 系统分支部署完成；公网 HTTP 200 及核心流程通过 | 系统 Pages 部署成功不等于自定义 Actions CI 已运行；本次未安装后者 |
+
+## 模块数值与公网流程验收
+
+公网测试使用真实部署地址，未以 localhost 站点冒充在线结果。几何值按编辑器 96 px/in 的换算显示；下表的图框值保留一位小数。
+
+| 操作 / 模块 | 实际结果 | 判定 |
+| --- | --- | --- |
+| 示例初次打开：画布 | 白色方格页面 `900 × 600 px`，取自源脚本的 `ggsave()` | PASS |
+| 示例初次打开：图框 | `x=80.9, y=81.2, w=787.3, h=426.2 px` | PASS；与原生 R 尺寸验证一致 |
+| 仅改画布 | 页面改为 `1000 × 700 px`；图框仍为 `80.9 / 81.2 / 787.3 / 426.2 px` | PASS；页面尺寸不拉伸图框 |
+| 仅改图框宽度 | 图框宽改为 `727 px`，画布保持 `1000 × 700 px` | PASS；两类尺寸独立 |
+| 项目下载与重开 | 便携项目重开后仍为上述修改后的画布与图框尺寸 | PASS |
+| SVG / PDF 页面 | 页面为 `750 × 525 pt`，对应 `1000 × 700 px`（96 px/in、72 pt/in） | PASS |
+| PNG 导出 | `6250 × 4375` 像素，600 dpi；对应同一物理页面 | PASS；PNG 分辨率不改变编辑器图框尺寸 |
+| 上传人工脚本与 CSV | 真实 filechooser 选择 `upload.R + data.csv`；基础 `read.csv()` 相对读取；白纸 `480 × 320 px` | PASS |
+| 上传文件重放代码 | R 修改代码正确引用源脚本；便携项目保留所选文件的原始字节和 SHA | PASS |
+| 空文件选择结果 | 空 `FileList` 不进入卡住的加载状态 | PASS；原生系统文件对话框 Cancel 尚未实测 |
+| IndexedDB 配额错误 | 自动保存失败时仍能下载完整项目 | PASS |
+| 公网浏览器健康 | 零页面错误、零失败请求 | PASS |
+| 公网文件与网络边界 | 测试期间无 POST、API、本机 localhost 或产品遥测请求；仅加载网站、运行时和依赖资源 | PASS；不承诺用户任意联网 R 脚本也无网络请求 |
+
+可重跑的测试源码：[公网编辑/尺寸/导出](../tests/browser-ui-smoke.mjs)、[公网真实文件导入](../tests/browser-upload-smoke.mjs)、[CAD 选择](../tests/browser-cad-smoke.mjs)、[WebR 引擎](../r-adapter/browser-smoke.mjs)、[原生 R 图元选择](../tests/verify-native-selection.R)。对应运行结果和截图保留在本机被忽略目录，未提交为公开附件。
 
 本机生成证据保留在被忽略的验证目录。公开仓库保留测试脚本和人工 fixture，使测试可以重跑，不附带真实科研图或本机路径截图。
 
@@ -68,16 +98,25 @@
 
 统计模型、数据过滤和显著性计算仍由用户脚本负责。软件的图形和重放测试不证明科研数据或统计结论正确。字体和图形设备与本机 R 可能不同，具体论文图需逐一核对。
 
+当前没有取得完整验收的内容：
+
+- 任意 ggplot 参数逐条交互覆盖、所有第三方 geom 和每个数据点的独立编辑。
+- 复杂 facet、patchwork/cowplot 多面板组合、base R、plotly、Shiny 和 R Markdown 全流程。
+- 任意 R 包安装与 Windows DLL；脚本里的本机绝对路径和未选择文件无法自动读取。
+- 原生系统文件选择对话框 Cancel、各浏览器/移动端和私有模式的完整兼容矩阵；空 FileList 与 IndexedDB 配额失败已经单独测试。
+- 用户真实 PSR/野火等项目的全部脚本、数据与包组合；本次公网证据使用人工 fixture，不把单例通过扩大为真实项目全覆盖。
+- 桌面打包、Codex MCP 深度集成、云端 Agent 服务和上游完整出版预检。这些不是本次网页发行的已完成模块。
+
 ## 保存、隐私和回滚
 
-IndexedDB 自动保存只保留最近一个项目。清理站点数据、隐私模式和配额限制会影响恢复；请下载项目作为正式存档。项目 JSON 含用户已选择的脚本和数据，分享它意味着分享这些文件。
+IndexedDB 自动保存只保留最近一个项目。清理站点数据、隐私模式和配额限制会影响恢复；请下载项目作为正式存档。已验证配额失败不会阻止下载项目。项目 JSON 含用户已选择的脚本和数据，分享它意味着分享这些文件。
 
 站点没有文件上传服务器；运行时、R 包、字体和普通站点资源仍需网络请求，用户脚本自身也可能联网。浏览器入口没有初始化上游产品遥测。完整说明见 [WEB_PRIVACY.md](WEB_PRIVACY.md)。
 
 发布前记录 main 源 SHA、gh-pages 产物 SHA 和 Pages 部署记录，验证通过后建立版本标记。网站回滚以 gh-pages 新提交恢复已验证静态产物，保留对应源 SHA；源码修正另在 main 完成并重新构建发布。回滚后做核心浏览器验收和公网版本核对；不强推、不删除用户科研文件。操作清单见 [RELEASE_AND_ROLLBACK.md](RELEASE_AND_ROLLBACK.md)。
 
-## 公网发布后必须补齐
+## 本次交付状态
 
-- 填写真实网站、main 源提交、gh-pages 产物提交和 Pages 部署记录，并核对公网 `build-info.json`。
-- 将完整 WebR 流程的操作、数值和导出结果填写到本报告；失败项保留原因和处理状态。
-- 核对公网子路径下页面、Worker、R 包、上传、修改、项目下载与重开，不用 localhost 的 HTTP 200 代替公网验收。
+本次对应源码、受检查静态包、GitHub Pages 系统部署和上述公网核心流程均完成。后续功能扩展与兼容性工作按“当前兼容边界”逐项验收；本报告不宣称全部 R 参数、所有科研脚本、桌面版本或 Codex MCP 已完成。
+
+回滚以本报告记录的源提交与 gh-pages 产物提交作为已验证基线；上述两个版本标签已推送成功，提交 SHA 也可独立精确追溯。

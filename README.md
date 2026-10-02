@@ -2,6 +2,8 @@
 
 基于 [Tavotto](https://github.com/Tavotto/Tavotto) 的非官方 R 绘图编辑器衍生版本。沿用上游画布选择、对象树、检查器和撤销交互，使用 WebR 在浏览器中运行 R/ggplot2。
 
+[打开在线编辑器](https://hongzhongdalv.github.io/r-tavotto-web/) · [本次上线与验收报告](docs/RELEASE_REPORT_20261003.md)
+
 网站定位是 **打开 R 图 → 在图上选对象 → 调整参数 → 得到可重放的 R 修改代码和图形导出**。浏览器版本使用文件选择器导入用户提供的文件；无需另起本机 Node/R 服务，站点也不会查询电脑上的目录列表。
 
 ## 使用流程

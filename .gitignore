@@ -9,6 +9,7 @@ coverage/
 playwright-report/
 test-results/
 /tests/browser-ui-results/
+/tests/browser-*-results/
 /tests/browser-cad-results/
 /tests/browser-results/
 /tests/*-report.json

@@ -94,10 +94,26 @@ try {
     await page.getByTestId('download-figure.'+extension).click()
     const download=await event,bytes=await readFile(await download.path())
     assert.ok(bytes.length>1000,extension+' export is empty')
-    if(extension==='png')assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a')
-    if(extension==='pdf')assert.equal(bytes.subarray(0,5).toString(),'%PDF-')
-    if(extension==='svg')assert.match(bytes.toString(),/<svg/)
-    exports[extension]={bytes:bytes.length}
+    let dimensions
+    if(extension==='png'){
+      assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a')
+      dimensions=[bytes.readUInt32BE(16),bytes.readUInt32BE(20)]
+      assert.deepEqual(dimensions,[6250,4375],'600 dpi raster must match 1000x700 CSS px')
+    }
+    if(extension==='pdf'){
+      assert.equal(bytes.subarray(0,5).toString(),'%PDF-')
+      const box=bytes.toString('latin1').match(/\/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)\s*\]/)
+      assert.ok(box,'PDF page size must be explicit')
+      dimensions=[Number(box[1]),Number(box[2])]
+      assert.deepEqual(dimensions,[750,525])
+    }
+    if(extension==='svg'){
+      const root=bytes.toString().match(/<svg\b[^>]+>/)?.[0]
+      assert.ok(root,'SVG root is missing')
+      dimensions=['width','height'].map(key=>Number(root.match(new RegExp(key+'="([0-9.]+)pt"'))?.[1]))
+      assert.deepEqual(dimensions,[750,525])
+    }
+    exports[extension]={bytes:bytes.length,dimensions}
   }
   await page.keyboard.press('Escape')
   await page.evaluate(()=>{IDBFactory.prototype.open=()=>{throw new DOMException('Storage disabled for verification','QuotaExceededError')}})
