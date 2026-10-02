@@ -1,0 +1,9 @@
+{
+  "format": "r-tavotto-browser-build",
+  "revision": "a298a7e7d3cc3634055404465043c7207865f22d",
+  "repository": "hongzhongDaLv/r-tavotto-web",
+  "source": "https://github.com/hongzhongDaLv/r-tavotto-web/tree/a298a7e7d3cc3634055404465043c7207865f22d",
+  "generated_at": "2026-10-02T17:40:38.569Z",
+  "runtime": "WebR in the browser",
+  "license": "AGPL-3.0-only"
+}
